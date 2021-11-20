@@ -5,7 +5,7 @@ The project consist of three microservices, namely,
 - shopping-analytics-service where cart item's popularity are tracked
 
 ## Architecture overview
-![Architecture Overview](/home/mucciolo/dev/scala/scala-shopping-cart/img/architecture-overview.svg)
+![Architecture Overview](img/architecture-overview.svg?raw=true)
 
 Each user’s cart is represented by a Cart Entity. Cart state is persisted using Event Sourcing:
 When a user updates their cart, the Entity persists events in an Event Journal database.
