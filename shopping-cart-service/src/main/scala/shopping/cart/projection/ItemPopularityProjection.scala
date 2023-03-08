@@ -1,21 +1,21 @@
-package shopping.cart
+package shopping.cart.projection
 
 import akka.actor.typed.ActorSystem
 import akka.cluster.sharding.typed.ShardedDaemonProcessSettings
 import akka.cluster.sharding.typed.scaladsl.ShardedDaemonProcess
 import akka.persistence.jdbc.query.scaladsl.JdbcReadJournal
 import akka.persistence.query.Offset
-import akka.projection.{ProjectionBehavior, ProjectionId}
 import akka.projection.eventsourced.EventEnvelope
 import akka.projection.eventsourced.scaladsl.EventSourcedProvider
 import akka.projection.jdbc.scaladsl.JdbcProjection
 import akka.projection.scaladsl.{ExactlyOnceProjection, SourceProvider}
+import akka.projection.{ProjectionBehavior, ProjectionId}
+import shopping.cart.core.ShoppingCart
 import shopping.cart.repository.{ItemPopularityRepository, ScalikeJdbcSession}
 
 object ItemPopularityProjection {
 
   def init(system: ActorSystem[_], repository: ItemPopularityRepository): Unit = {
-
     ShardedDaemonProcess(system).init(
       name = "ItemPopularityProjection",
       ShoppingCart.tags.size,
@@ -24,10 +24,11 @@ object ItemPopularityProjection {
       Some(ProjectionBehavior.Stop))
   }
 
-  private def createProjectionFor(implicit system: ActorSystem[_],
-                                  repository     : ItemPopularityRepository,
-                                  index          : Int)
-  : ExactlyOnceProjection[Offset, EventEnvelope[ShoppingCart.Event]] = {
+  private def createProjectionFor(
+    system: ActorSystem[_],
+    repository: ItemPopularityRepository,
+    index: Int
+  ): ExactlyOnceProjection[Offset, EventEnvelope[ShoppingCart.Event]] = {
 
     val tag = ShoppingCart.tags(index)
 
@@ -40,8 +41,8 @@ object ItemPopularityProjection {
     JdbcProjection.exactlyOnce(
       projectionId = ProjectionId("ItemPopularityProjection", tag),
       sourceProvider,
-      handler = () => new ItemPopularityProjectionHandler(tag, system, repository),
-      sessionFactory = () => new ScalikeJdbcSession())
+      handler = () => new ItemPopularityProjectionHandler(tag, repository),
+      sessionFactory = () => new ScalikeJdbcSession())(system)
   }
 
 }

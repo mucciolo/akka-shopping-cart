@@ -1,19 +1,19 @@
 package shopping.cart
 
-import akka.actor.typed.scaladsl.Behaviors
 import akka.actor.typed.ActorSystem
+import akka.actor.typed.scaladsl.Behaviors
 import akka.grpc.GrpcClientSettings
 import akka.management.cluster.bootstrap.ClusterBootstrap
 import akka.management.scaladsl.AkkaManagement
-import org.slf4j.LoggerFactory
+import shopping.cart.core.{ShoppingCart, ShoppingCartServer, ShoppingCartServiceImpl}
+import shopping.cart.projection.{ItemPopularityProjection, PublishEventsProjection, SendOrderProjection}
 import shopping.cart.repository.{ItemPopularityRepositoryImpl, ScalikeJdbcSetup}
+import shopping.cart.util.Log
 import shopping.order.proto.{ShoppingOrderService, ShoppingOrderServiceClient}
 
 import scala.util.control.NonFatal
 
-object Main {
-
-  private val logger = LoggerFactory.getLogger("shopping.cart.Main")
+object Main extends Log {
 
   def main(args: Array[String]): Unit = {
 
@@ -23,7 +23,7 @@ object Main {
       init(system)
     } catch {
       case NonFatal(e) =>
-        logger.error("Terminating due to initialization failure.", e)
+        log.error("Terminating due to initialization failure.", e)
         system.terminate()
     }
   }
@@ -34,16 +34,18 @@ object Main {
     ClusterBootstrap(system).start()
     ShoppingCart.init(system)
     ScalikeJdbcSetup.init(system)
+
     val itemPopularityRepository = new ItemPopularityRepositoryImpl()
     ItemPopularityProjection.init(system, itemPopularityRepository)
     PublishEventsProjection.init(system)
+
     val orderService = orderServiceClient(system)
     SendOrderProjection.init(system, orderService)
 
     val grpcInterface = system.settings.config.getString("shopping-cart-service.grpc.interface")
     val grpcPort = system.settings.config.getInt("shopping-cart-service.grpc.port")
-    val grpcService = new ShoppingCartServiceImpl(system, itemPopularityRepository)
-    ShoppingCartServer.start(grpcInterface, grpcPort, system, grpcService)
+    val shoppingCartService = new ShoppingCartServiceImpl(system, itemPopularityRepository)
+    ShoppingCartServer.start(grpcInterface, grpcPort, system, shoppingCartService)
   }
 
   protected def orderServiceClient(system: ActorSystem[_]): ShoppingOrderService = {

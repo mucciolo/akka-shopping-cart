@@ -21,6 +21,7 @@ object ScalikeJdbcSession {
  * Provide database connections within a transaction to Akka Projections.
  */
 final class ScalikeJdbcSession extends JdbcSession {
+
   val db: DB = DB.connect()
   db.autoClose(false)
 

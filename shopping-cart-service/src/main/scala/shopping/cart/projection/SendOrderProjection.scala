@@ -1,17 +1,16 @@
-package shopping.cart
+package shopping.cart.projection
 
 import akka.actor.typed.ActorSystem
 import akka.cluster.sharding.typed.ShardedDaemonProcessSettings
 import akka.cluster.sharding.typed.scaladsl.ShardedDaemonProcess
 import akka.persistence.jdbc.query.scaladsl.JdbcReadJournal
 import akka.persistence.query.Offset
-import akka.projection.ProjectionBehavior
-import akka.projection.ProjectionId
 import akka.projection.eventsourced.EventEnvelope
 import akka.projection.eventsourced.scaladsl.EventSourcedProvider
 import akka.projection.jdbc.scaladsl.JdbcProjection
-import akka.projection.scaladsl.AtLeastOnceProjection
-import akka.projection.scaladsl.SourceProvider
+import akka.projection.scaladsl.{AtLeastOnceProjection, SourceProvider}
+import akka.projection.{ProjectionBehavior, ProjectionId}
+import shopping.cart.core.ShoppingCart
 import shopping.cart.repository.ScalikeJdbcSession
 import shopping.order.proto.ShoppingOrderService
 
@@ -30,8 +29,8 @@ object SendOrderProjection {
   private def createProjectionFor(
     system      : ActorSystem[_],
     orderService: ShoppingOrderService,
-    index       : Int)
-  : AtLeastOnceProjection[Offset, EventEnvelope[ShoppingCart.Event]] = {
+    index       : Int
+  ): AtLeastOnceProjection[Offset, EventEnvelope[ShoppingCart.Event]] = {
 
     val tag = ShoppingCart.tags(index)
     val sourceProvider: SourceProvider[Offset, EventEnvelope[ShoppingCart.Event]] =

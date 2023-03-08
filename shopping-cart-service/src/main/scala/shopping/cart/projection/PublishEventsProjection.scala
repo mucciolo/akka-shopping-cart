@@ -1,4 +1,4 @@
-package shopping.cart
+package shopping.cart.projection
 
 import akka.actor.CoordinatedShutdown
 import akka.actor.typed.ActorSystem
@@ -13,10 +13,8 @@ import akka.projection.eventsourced.scaladsl.EventSourcedProvider
 import akka.projection.jdbc.scaladsl.JdbcProjection
 import akka.projection.scaladsl.{AtLeastOnceProjection, SourceProvider}
 import akka.projection.{ProjectionBehavior, ProjectionId}
-import org.apache.kafka.common.serialization.{
-  ByteArraySerializer,
-  StringSerializer
-}
+import org.apache.kafka.common.serialization.{ByteArraySerializer, StringSerializer}
+import shopping.cart.core.ShoppingCart
 import shopping.cart.repository.ScalikeJdbcSession
 
 object PublishEventsProjection {
@@ -40,8 +38,7 @@ object PublishEventsProjection {
     val sendProducer = SendProducer(producerSettings)(system)
 
     CoordinatedShutdown(system).addTask(
-      CoordinatedShutdown.PhaseBeforeActorSystemTerminate,
-      "close-sendProducer") { () =>
+      CoordinatedShutdown.PhaseBeforeActorSystemTerminate, "close-sendProducer") { () =>
       sendProducer.close()
     }
 
@@ -49,11 +46,11 @@ object PublishEventsProjection {
   }
 
   private def createProjectionFor(
-    system      : ActorSystem[_],
-    topic       : String,
+    system: ActorSystem[_],
+    topic: String,
     sendProducer: SendProducer[String, Array[Byte]],
-    index       : Int)
-  : AtLeastOnceProjection[Offset, EventEnvelope[ShoppingCart.Event]] = {
+    index: Int
+  ): AtLeastOnceProjection[Offset, EventEnvelope[ShoppingCart.Event]] = {
 
     val tag = ShoppingCart.tags(index)
     val sourceProvider: SourceProvider[Offset, EventEnvelope[ShoppingCart.Event]] =

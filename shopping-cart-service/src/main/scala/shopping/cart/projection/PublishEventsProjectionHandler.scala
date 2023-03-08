@@ -1,7 +1,4 @@
-package shopping.cart
-
-import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
+package shopping.cart.projection
 
 import akka.Done
 import akka.actor.typed.ActorSystem
@@ -10,14 +7,18 @@ import akka.projection.eventsourced.EventEnvelope
 import akka.projection.scaladsl.Handler
 import com.google.protobuf.any.{Any => ScalaPBAny}
 import org.apache.kafka.clients.producer.ProducerRecord
-import org.slf4j.LoggerFactory
+import shopping.cart.core.ShoppingCart
+import shopping.cart.proto
+import shopping.cart.util.Log
+
+import scala.concurrent.{ExecutionContext, Future}
 
 class PublishEventsProjectionHandler(
   system      : ActorSystem[_],
   topic       : String,
-  sendProducer: SendProducer[String, Array[Byte]]) extends Handler[EventEnvelope[ShoppingCart.Event]] {
+  sendProducer: SendProducer[String, Array[Byte]]
+) extends Handler[EventEnvelope[ShoppingCart.Event]] with Log {
 
-  private val log = LoggerFactory.getLogger(getClass)
   private implicit val ec: ExecutionContext = system.executionContext
 
   override def process(envelope: EventEnvelope[ShoppingCart.Event]): Future[Done] = {
@@ -39,10 +40,19 @@ class PublishEventsProjectionHandler(
   private def serialize(event: ShoppingCart.Event): Array[Byte] = {
 
     val protoMessage = event match {
+
       case ShoppingCart.ItemAdded(cartId, itemId, quantity) =>
         proto.ItemAdded(cartId, itemId, quantity)
+
       case ShoppingCart.CheckedOut(cartId, _) =>
         proto.CheckedOut(cartId)
+
+      case ShoppingCart.ItemRemoved(cartId, itemId) =>
+        proto.ItemRemoved(cartId, itemId)
+
+      case ShoppingCart.ItemQuantityUpdated(cartId, itemId, _, updatedQuantity) =>
+        proto.ItemQuantityAdjusted(cartId, itemId, updatedQuantity)
+
     }
 
     // pack in Any so that type information is included for deserialization

@@ -7,14 +7,12 @@ class ItemPopularityRepositoryImpl() extends ItemPopularityRepository {
   override def update(session: ScalikeJdbcSession, itemId: String, delta: Int): Unit = {
 
     session.db.withinTx { implicit dbSession =>
-      // This uses the PostgreSQL `ON CONFLICT` feature
-      // Alternatively, this can be implemented by first issuing the `UPDATE`
-      // and checking for the updated rows count. If no rows got updated issue
-      // the `INSERT` instead.
       sql"""
            INSERT INTO item_popularity (itemid, count) VALUES ($itemId, $delta)
            ON CONFLICT (itemid) DO UPDATE SET count = item_popularity.count + $delta
-         """.executeUpdate().apply()
+         """
+        .executeUpdate()
+        .apply()
     }
   }
 

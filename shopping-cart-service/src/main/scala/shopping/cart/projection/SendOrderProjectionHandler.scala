@@ -1,27 +1,25 @@
-package shopping.cart
-
-import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
+package shopping.cart.projection
 
 import akka.Done
 import akka.actor.typed.ActorSystem
-import akka.cluster.sharding.typed.scaladsl.ClusterSharding
+import akka.cluster.sharding.typed.scaladsl.{ClusterSharding, EntityRef}
 import akka.projection.eventsourced.EventEnvelope
 import akka.projection.scaladsl.Handler
 import akka.util.Timeout
-import org.slf4j.LoggerFactory
-import shopping.order.proto.Item
-import shopping.order.proto.OrderRequest
-import shopping.order.proto.ShoppingOrderService
+import shopping.cart.core.ShoppingCart
+import shopping.cart.util.Log
+import shopping.order.proto.{Item, OrderRequest, ShoppingOrderService}
+
+import scala.concurrent.{ExecutionContext, Future}
 
 class SendOrderProjectionHandler(
-  system      : ActorSystem[_],
-  orderService: ShoppingOrderService) extends Handler[EventEnvelope[ShoppingCart.Event]] {
+  system: ActorSystem[_],
+  orderService: ShoppingOrderService
+) extends Handler[EventEnvelope[ShoppingCart.Event]] with Log {
 
-  private val log = LoggerFactory.getLogger(getClass)
   private implicit val executionContext: ExecutionContext = system.executionContext
 
-  private val sharding = ClusterSharding(system)
+  private val sharding: ClusterSharding = ClusterSharding(system)
   implicit private val timeout: Timeout = Timeout.create(
     system.settings.config.getDuration("shopping-cart-service.ask-timeout"))
 
@@ -40,13 +38,15 @@ class SendOrderProjectionHandler(
 
   private def sendOrder(checkout: ShoppingCart.CheckedOut): Future[Done] = {
 
-    val entityRef = sharding.entityRefFor(ShoppingCart.EntityKey, checkout.cartId)
+    val entityRef: EntityRef[ShoppingCart.Command] =
+      sharding.entityRefFor(ShoppingCart.EntityKey, checkout.cartId)
 
     entityRef.ask(ShoppingCart.Get).flatMap { cart =>
 
-      val items = cart.items.iterator.map { case (itemId, quantity) =>
-          Item(itemId, quantity)
-        }.toList
+      val items: Seq[Item] = cart.items
+        .iterator
+        .map { case (itemId, quantity) => Item(itemId, quantity) }
+        .toList
 
       log.info("Sending order of {} items for cart {}.", items.size, checkout.cartId)
 

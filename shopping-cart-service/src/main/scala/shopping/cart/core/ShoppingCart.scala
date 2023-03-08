@@ -1,10 +1,11 @@
-package shopping.cart
+package shopping.cart.core
 
 import akka.actor.typed.{ActorRef, ActorSystem, Behavior, SupervisorStrategy}
 import akka.cluster.sharding.typed.scaladsl.{ClusterSharding, Entity, EntityContext, EntityTypeKey}
 import akka.pattern.StatusReply
 import akka.persistence.typed.PersistenceId
 import akka.persistence.typed.scaladsl.{Effect, EventSourcedBehavior, ReplyEffect, RetentionCriteria}
+import shopping.cart.serialization.CborSerializable
 
 import java.time.Instant
 import scala.concurrent.duration.DurationInt
@@ -60,7 +61,7 @@ object ShoppingCart {
 
   final case class ItemRemoved(cartId: String, itemId: String) extends Event
 
-  final case class ItemQuantityUpdated(cartId: String, itemId: String, quantity: Int) extends Event
+  final case class ItemQuantityUpdated(cartId: String, itemId: String, currentQuantity: Int, updatedQuantity: Int) extends Event
 
   final case class State(items: Map[String, Int], checkoutDate: Option[Instant]) extends CborSerializable {
 
@@ -146,13 +147,15 @@ object ShoppingCart {
       else
         Effect.reply(replyTo)(StatusReply.Error(s"Item '$itemId' not found in this shopping cart"))
 
-    case UpdateItemQuantity(itemId, quantity, replyTo) =>
+    case UpdateItemQuantity(itemId, updatedQuantity, replyTo) =>
       if (state.hasItem(itemId)) {
-        if (quantity <= 0)
+        if (updatedQuantity <= 0)
           Effect.reply(replyTo)(StatusReply.Error("Quantity must be greater than zero"))
-        else
-          Effect.persist(ItemQuantityUpdated(cartId, itemId, quantity))
+        else {
+          val currentQuantity = state.items(itemId)
+          Effect.persist(ItemQuantityUpdated(cartId, itemId, currentQuantity, updatedQuantity))
             .thenReply(replyTo)(updatedCart => StatusReply.Success(updatedCart.toSummary))
+        }
       } else {
         Effect.reply(replyTo)(StatusReply.Error(s"Item '$itemId' not found in this shopping cart"))
       }
@@ -169,12 +172,12 @@ object ShoppingCart {
     case ItemRemoved(_, itemId) =>
       state.updateItem(itemId, 0)
 
-    case ItemQuantityUpdated(_, itemId, quantity) =>
-      state.updateItem(itemId, quantity)
+    case ItemQuantityUpdated(_, itemId, _, updatedQuantity) =>
+      state.updateItem(itemId, updatedQuantity)
   }
 
   val EntityKey: EntityTypeKey[Command] = EntityTypeKey[Command]("ShoppingCart")
-  val tags = Vector.tabulate(5)(i => s"carts-$i")
+  val tags: Vector[String] = Vector.tabulate(5)(i => s"carts-$i")
 
   def init(system: ActorSystem[_]): Unit = {
 

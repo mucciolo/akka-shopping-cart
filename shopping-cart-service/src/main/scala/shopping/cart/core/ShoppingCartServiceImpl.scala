@@ -1,23 +1,23 @@
-package shopping.cart
+package shopping.cart.core
 
-import java.util.concurrent.TimeoutException
-import scala.concurrent.{ExecutionContext, Future}
 import akka.actor.typed.{ActorSystem, DispatcherSelector}
 import akka.cluster.sharding.typed.scaladsl.ClusterSharding
 import akka.grpc.GrpcServiceException
 import akka.util.Timeout
 import io.grpc.Status
-import org.slf4j.LoggerFactory
+import shopping.cart.proto
 import shopping.cart.proto.{Cart, UpdateItemQuantityRequest}
 import shopping.cart.repository.{ItemPopularityRepository, ScalikeJdbcSession}
+import shopping.cart.util.Log
+
+import java.util.concurrent.TimeoutException
+import scala.concurrent.{ExecutionContext, Future}
 
 class ShoppingCartServiceImpl(
   system                  : ActorSystem[_],
-  itemPopularityRepository: ItemPopularityRepository) extends proto.ShoppingCartService {
+  itemPopularityRepository: ItemPopularityRepository) extends proto.ShoppingCartService with Log {
 
   import system.executionContext
-
-  private val logger = LoggerFactory.getLogger(getClass)
 
   implicit private val timeout: Timeout =
     Timeout.create(system.settings.config.getDuration("shopping-cart-service.ask-timeout"))
@@ -26,7 +26,7 @@ class ShoppingCartServiceImpl(
 
   override def addItem(request: proto.AddItemRequest): Future[proto.Cart] = {
 
-    logger.info("AddItemRequest: {} '{}' to cart '{}'", request.quantity, request.itemId, request.cartId)
+    log.info("AddItemRequest: {} '{}' to cart '{}'", request.quantity, request.itemId, request.cartId)
 
     val entityRef = sharding.entityRefFor(ShoppingCart.EntityKey, request.cartId)
     val reply: Future[ShoppingCart.Summary] =
@@ -38,7 +38,7 @@ class ShoppingCartServiceImpl(
 
   override def checkout(request: proto.CheckoutRequest): Future[proto.Cart] = {
 
-    logger.info("CheckoutRequest: {}", request.cartId)
+    log.info("CheckoutRequest: {}", request.cartId)
 
     val entityRef = sharding.entityRefFor(ShoppingCart.EntityKey, request.cartId)
     val reply: Future[ShoppingCart.Summary] =
@@ -50,7 +50,7 @@ class ShoppingCartServiceImpl(
 
   override def getCart(request: proto.GetCartRequest): Future[proto.Cart] = {
 
-    logger.info("GetCartRequest: {}", request.cartId)
+    log.info("GetCartRequest: {}", request.cartId)
 
     val entityRef = sharding.entityRefFor(ShoppingCart.EntityKey, request.cartId)
     val response =
@@ -67,7 +67,7 @@ class ShoppingCartServiceImpl(
 
   override def removeItem(request: proto.RemoveItemRequest): Future[proto.Cart] = {
 
-    logger.info("RemoveItemRequest: item '{}' from cart '{}'", request.itemId, request.cartId)
+    log.info("RemoveItemRequest: item '{}' from cart '{}'", request.itemId, request.cartId)
 
     val entityRef = sharding.entityRefFor(ShoppingCart.EntityKey, request.cartId)
     val reply: Future[ShoppingCart.Summary] =
@@ -80,8 +80,8 @@ class ShoppingCartServiceImpl(
 
   override def updateItemQuantity(request: UpdateItemQuantityRequest): Future[Cart] = {
 
-    logger.info("UpdateItemQuantityRequest: changed item '{}' quantity to {} at cart '{}'",
-      request.quantity, request.itemId, request.cartId)
+    log.info("UpdateItemQuantityRequest: '{}' quantity to {} at cart '{}'",
+      request.itemId, request.quantity, request.cartId)
 
     val entityRef = sharding.entityRefFor(ShoppingCart.EntityKey, request.cartId)
     val reply: Future[ShoppingCart.Summary] =

@@ -6,13 +6,14 @@ import akka.persistence.testkit.scaladsl.EventSourcedBehaviorTestKit
 import com.typesafe.config.{Config, ConfigFactory}
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.wordspec.AnyWordSpecLike
+import shopping.cart.core.ShoppingCart
 
 object ShoppingCartSpec {
   val config: Config = ConfigFactory
     .parseString(
       """
       akka.actor.serialization-bindings {
-        "shopping.cart.CborSerializable" = jackson-cbor
+        "shopping.cart.serialization.CborSerializable" = jackson-cbor
       }
       """)
     .withFallback(EventSourcedBehaviorTestKit.config)
