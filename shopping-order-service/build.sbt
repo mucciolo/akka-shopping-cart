@@ -1,10 +1,5 @@
 name := "shopping-order-service"
-
-organization := "com.lightbend.akka.samples"
-organizationHomepage := Some(url("https://akka.io"))
-licenses := Seq(("CC0", url("https://creativecommons.org/publicdomain/zero/1.0")))
-
-scalaVersion := "2.13.5"
+scalaVersion := "2.13.10"
 
 Compile / scalacOptions ++= Seq(
   "-target:11",
@@ -22,12 +17,12 @@ Test / logBuffered := false
 run / fork := false
 Global / cancelable := false // ctrl-c
 
-val AkkaVersion = "2.6.16"
-val AkkaHttpVersion = "10.2.6"
-val AkkaManagementVersion = "1.0.10"
-val AkkaPersistenceJdbcVersion = "5.0.4"
-val AlpakkaKafkaVersion = "2.0.7"
-val AkkaProjectionVersion = "1.2.2"
+val AkkaVersion = "2.7.0"
+val AkkaHttpVersion = "10.5.0"
+val AkkaManagementVersion = "1.2.0"
+val AkkaPersistenceJdbcVersion = "5.2.1"
+val AlpakkaKafkaVersion = "4.0.0"
+val AkkaProjectionVersion = "1.3.1"
 val ScalikeJdbcVersion = "3.5.0"
 
 enablePlugins(AkkaGrpcPlugin)
@@ -55,8 +50,8 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-discovery" % AkkaVersion,
   // Common dependencies for logging and testing
   "com.typesafe.akka" %% "akka-slf4j" % AkkaVersion,
-  "ch.qos.logback" % "logback-classic" % "1.2.3",
-  "org.scalatest" %% "scalatest" % "3.1.2" % Test,
+  "ch.qos.logback" % "logback-classic" % "1.4.5",
+  "org.scalatest" %% "scalatest" % "3.2.15" % Test,
   // 2. Using gRPC and/or protobuf
   "com.typesafe.akka" %% "akka-http2-support" % AkkaHttpVersion,
   // 3. Using Akka Persistence
@@ -64,7 +59,7 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-serialization-jackson" % AkkaVersion,
   "com.lightbend.akka" %% "akka-persistence-jdbc" % AkkaPersistenceJdbcVersion,
   "com.typesafe.akka" %% "akka-persistence-testkit" % AkkaVersion % Test,
-  "org.postgresql" % "postgresql" % "42.2.18",
+  "org.postgresql" % "postgresql" % "42.5.4",
   // 4. Querying or projecting data from Akka Persistence
   "com.typesafe.akka" %% "akka-persistence-query" % AkkaVersion,
   "com.lightbend.akka" %% "akka-projection-eventsourced" % AkkaProjectionVersion,

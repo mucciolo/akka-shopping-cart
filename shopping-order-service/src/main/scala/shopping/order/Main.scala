@@ -1,15 +1,15 @@
 package shopping.order
 
-import akka.actor.typed.scaladsl.Behaviors
 import akka.actor.typed.ActorSystem
+import akka.actor.typed.scaladsl.Behaviors
 import akka.management.cluster.bootstrap.ClusterBootstrap
 import akka.management.scaladsl.AkkaManagement
-import org.slf4j.LoggerFactory
+import shopping.order.core.{ShoppingOrderServer, ShoppingOrderServiceImpl}
+import shopping.order.util.Log
+
 import scala.util.control.NonFatal
 
-object Main {
-
-  private val logger = LoggerFactory.getLogger("shopping.order.Main")
+object Main extends Log {
 
   def main(args: Array[String]): Unit = {
 
@@ -19,19 +19,19 @@ object Main {
       init(system)
     } catch {
       case NonFatal(e) =>
-        logger.error("Terminating due to initialization failure.", e)
+        log.error("Terminating due to initialization failure.", e)
         system.terminate()
     }
   }
 
-  def init(system: ActorSystem[_]): Unit = {
+  private def init(system: ActorSystem[_]): Unit = {
 
     AkkaManagement(system).start()
     ClusterBootstrap(system).start()
 
     val grpcInterface = system.settings.config.getString("shopping-order-service.grpc.interface")
     val grpcPort = system.settings.config.getInt("shopping-order-service.grpc.port")
-    val grpcService = new ShoppingOrderServiceImpl
-    ShoppingOrderServer.start(grpcInterface, grpcPort, system, grpcService)
+    val shoppingOrderService = new ShoppingOrderServiceImpl
+    ShoppingOrderServer.start(grpcInterface, grpcPort, system, shoppingOrderService)
   }
 }

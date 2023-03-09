@@ -1,4 +1,4 @@
-package shopping.order
+package shopping.order.serialization
 
 /**
  * Marker trait for serialization with Jackson CBOR.
