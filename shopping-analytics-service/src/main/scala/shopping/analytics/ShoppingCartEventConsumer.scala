@@ -12,26 +12,26 @@ import akka.kafka.Subscriptions
 import akka.kafka.scaladsl.{Committer, Consumer}
 import akka.stream.RestartSettings
 import akka.stream.scaladsl.RestartSource
+import com.google.protobuf.CodedInputStream
 import com.google.protobuf.any.{Any => ScalaPBAny}
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.common.serialization.ByteArrayDeserializer
 import org.apache.kafka.common.serialization.StringDeserializer
-import org.slf4j.LoggerFactory
+import shopping.analytics.util.Log
 import shopping.cart.proto
 
-object ShoppingCartEventConsumer {
-
-  private val log = LoggerFactory.getLogger("shopping.analytics.ShoppingCartEventConsumer")
+object ShoppingCartEventConsumer extends Log {
 
   def init(implicit system: ActorSystem[_]): Unit = {
 
-    implicit val executionContext: ExecutionContext = system.executionContext
+    implicit val ec: ExecutionContext = system.executionContext
 
     val topic = system.settings.config.getString("shopping-analytics-service.shopping-cart-kafka-topic")
     val consumerSettings = ConsumerSettings(
       system,
       new StringDeserializer,
-      new ByteArrayDeserializer).withGroupId("shopping-cart-analytics")
+      new ByteArrayDeserializer
+    ).withGroupId("shopping-cart-analytics")
     val committerSettings = CommitterSettings(system)
 
     RestartSource
@@ -56,12 +56,12 @@ object ShoppingCartEventConsumer {
 
   private def handleRecord(record: ConsumerRecord[String, Array[Byte]]): Future[Done] = {
 
-    val bytes = record.value()
-    val x = ScalaPBAny.parseFrom(bytes)
-    val typeUrl = x.typeUrl
+    val bytes: Array[Byte] = record.value()
+    val x: ScalaPBAny = ScalaPBAny.parseFrom(bytes)
+    val typeUrl: String = x.typeUrl
 
     try {
-      val inputBytes = x.value.newCodedInput()
+      val inputBytes: CodedInputStream = x.value.newCodedInput()
       val event = typeUrl match {
 
           case "shopping-cart-service/shoppingcart.ItemAdded" =>
@@ -70,8 +70,11 @@ object ShoppingCartEventConsumer {
           case "shopping-cart-service/shoppingcart.CheckedOut" =>
             proto.CheckedOut.parseFrom(inputBytes)
 
+          case "shopping-cart-service/shoppingcart.ItemQuantityAdjusted" =>
+            proto.ItemQuantityAdjusted.parseFrom(inputBytes)
+
           case _ =>
-            throw new IllegalArgumentException(s"unknown record type [$typeUrl]")
+            throw new IllegalArgumentException(s"Unknown record type [$typeUrl]")
         }
 
       event match {
@@ -80,6 +83,9 @@ object ShoppingCartEventConsumer {
 
         case proto.CheckedOut(cartId, _) =>
           log.info("CheckedOut: cart {} checked out", cartId)
+
+        case proto.ItemQuantityAdjusted(cartId, itemId, quantity, _) =>
+          log.info("ItemQuantityAdjusted: {} {} at cart", quantity, itemId, cartId)
       }
 
       Future.successful(Done)

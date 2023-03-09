@@ -1,4 +1,4 @@
-package shopping.analytics
+package shopping.analytics.serialization
 
 /**
  * Marker trait for serialization with Jackson CBOR.
