@@ -114,7 +114,7 @@ class ShoppingCartSpec
       val result2 =
         eventSourcedTestKit.runCommand[StatusReply[ShoppingCart.Summary]](ShoppingCart.UpdateItemQuantity("foo", 10, _))
       result2.reply should ===(StatusReply.Success(ShoppingCart.Summary(Map("foo" -> 10), checkedOut = false)))
-      result2.event should ===(ShoppingCart.ItemQuantityUpdated(cartId, "foo", 10))
+      result2.event should ===(ShoppingCart.ItemQuantityUpdated(cartId, "foo", 42, 10))
 
       val result3 =
         eventSourcedTestKit.runCommand[StatusReply[ShoppingCart.Summary]](ShoppingCart.UpdateItemQuantity("foo", -1, _))
