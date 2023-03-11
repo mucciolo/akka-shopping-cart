@@ -4,6 +4,7 @@ import akka.actor.typed.ActorSystem
 import akka.actor.typed.scaladsl.Behaviors
 import akka.management.cluster.bootstrap.ClusterBootstrap
 import akka.management.scaladsl.AkkaManagement
+import shopping.analytics.core.ShoppingCartEventConsumer
 import shopping.analytics.util.Log
 
 import scala.util.control.NonFatal

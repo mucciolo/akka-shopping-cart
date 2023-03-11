@@ -2,7 +2,7 @@ name := "shopping-cart-service"
 scalaVersion := "2.13.10"
 
 Compile / scalacOptions ++= Seq(
-  "-target:11",
+  "-release:11",
   "-deprecation",
   "-feature",
   "-unchecked",
@@ -24,6 +24,9 @@ val AkkaPersistenceJdbcVersion = "5.2.1"
 val AlpakkaKafkaVersion = "4.0.0"
 val AkkaProjectionVersion = "1.3.1"
 val ScalikeJdbcVersion = "3.5.0"
+val ScalatestVersion = "3.2.15"
+val PostgreSQLVersion = "42.5.4"
+val LogbackVersion = "1.4.5"
 
 enablePlugins(AkkaGrpcPlugin)
 
@@ -34,37 +37,38 @@ dockerRepository := sys.props.get("docker.registry")
 ThisBuild / dynverSeparator := "-"
 
 libraryDependencies ++= Seq(
-  // 1. Basic dependencies for a clustered application
   "com.typesafe.akka" %% "akka-stream" % AkkaVersion,
   "com.typesafe.akka" %% "akka-cluster-typed" % AkkaVersion,
   "com.typesafe.akka" %% "akka-cluster-sharding-typed" % AkkaVersion,
-  "com.typesafe.akka" %% "akka-actor-testkit-typed" % AkkaVersion % Test,
-  "com.typesafe.akka" %% "akka-stream-testkit" % AkkaVersion % Test,
-  // Akka Management powers Health Checks and Akka Cluster Bootstrapping
-  "com.lightbend.akka.management" %% "akka-management" % AkkaManagementVersion,
   "com.typesafe.akka" %% "akka-http" % AkkaHttpVersion,
   "com.typesafe.akka" %% "akka-http-spray-json" % AkkaHttpVersion,
-  "com.lightbend.akka.management" %% "akka-management-cluster-http" % AkkaManagementVersion,
-  "com.lightbend.akka.management" %% "akka-management-cluster-bootstrap" % AkkaManagementVersion,
-  "com.lightbend.akka.discovery" %% "akka-discovery-kubernetes-api" % AkkaManagementVersion,
   "com.typesafe.akka" %% "akka-discovery" % AkkaVersion,
-  // Common dependencies for logging and testing
   "com.typesafe.akka" %% "akka-slf4j" % AkkaVersion,
-  "ch.qos.logback" % "logback-classic" % "1.4.5",
-  "org.scalatest" %% "scalatest" % "3.2.15" % Test,
-  // 2. Using gRPC and/or protobuf
+  "ch.qos.logback" % "logback-classic" % LogbackVersion,
   "com.typesafe.akka" %% "akka-http2-support" % AkkaHttpVersion,
-  // 3. Using Akka Persistence
   "com.typesafe.akka" %% "akka-persistence-typed" % AkkaVersion,
   "com.typesafe.akka" %% "akka-serialization-jackson" % AkkaVersion,
-  "com.lightbend.akka" %% "akka-persistence-jdbc" % AkkaPersistenceJdbcVersion,
-  "com.typesafe.akka" %% "akka-persistence-testkit" % AkkaVersion % Test,
-  "org.postgresql" % "postgresql" % "42.5.4",
-  // 4. Querying or projecting data from Akka Persistence
   "com.typesafe.akka" %% "akka-persistence-query" % AkkaVersion,
+
+  "com.lightbend.akka.management" %% "akka-management" % AkkaManagementVersion,
+  "com.lightbend.akka.management" %% "akka-management-cluster-http" % AkkaManagementVersion,
+  "com.lightbend.akka.management" %% "akka-management-cluster-bootstrap" % AkkaManagementVersion,
+
+  "com.lightbend.akka" %% "akka-persistence-jdbc" % AkkaPersistenceJdbcVersion,
+
+  "org.postgresql" % "postgresql" % PostgreSQLVersion,
+
+  "com.typesafe.akka" %% "akka-stream-kafka" % AlpakkaKafkaVersion,
+
   "com.lightbend.akka" %% "akka-projection-eventsourced" % AkkaProjectionVersion,
   "com.lightbend.akka" %% "akka-projection-jdbc" % AkkaProjectionVersion,
+
   "org.scalikejdbc" %% "scalikejdbc" % ScalikeJdbcVersion,
   "org.scalikejdbc" %% "scalikejdbc-config" % ScalikeJdbcVersion,
-  "com.typesafe.akka" %% "akka-stream-kafka" % AlpakkaKafkaVersion,
-  "com.lightbend.akka" %% "akka-projection-testkit" % AkkaProjectionVersion % Test)
+
+  "com.typesafe.akka" %% "akka-actor-testkit-typed" % AkkaVersion % Test,
+  "com.typesafe.akka" %% "akka-stream-testkit" % AkkaVersion % Test,
+  "org.scalatest" %% "scalatest" % ScalatestVersion % Test,
+  "com.typesafe.akka" %% "akka-persistence-testkit" % AkkaVersion % Test,
+  "com.lightbend.akka" %% "akka-projection-testkit" % AkkaProjectionVersion % Test
+)

@@ -1,24 +1,21 @@
-package shopping.analytics
+package shopping.analytics.core
 
-import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
-import scala.concurrent.duration._
-import scala.util.control.NonFatal
 import akka.Done
 import akka.actor.typed.ActorSystem
-import akka.kafka.CommitterSettings
-import akka.kafka.ConsumerSettings
-import akka.kafka.Subscriptions
+import akka.kafka.{CommitterSettings, ConsumerSettings, Subscriptions}
 import akka.kafka.scaladsl.{Committer, Consumer}
 import akka.stream.RestartSettings
 import akka.stream.scaladsl.RestartSource
 import com.google.protobuf.CodedInputStream
 import com.google.protobuf.any.{Any => ScalaPBAny}
 import org.apache.kafka.clients.consumer.ConsumerRecord
-import org.apache.kafka.common.serialization.ByteArrayDeserializer
-import org.apache.kafka.common.serialization.StringDeserializer
+import org.apache.kafka.common.serialization.{ByteArrayDeserializer, StringDeserializer}
 import shopping.analytics.util.Log
 import shopping.cart.proto
+
+import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.duration._
+import scala.util.control.NonFatal
 
 object ShoppingCartEventConsumer extends Log {
 

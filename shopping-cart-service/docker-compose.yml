@@ -1,9 +1,10 @@
-version: '2.2'
+version: '3.8'
+
 services:
   postgres-db:
     image: postgres:15.2
     ports:
-      - "5432:5432"
+      - '5432:5432'
     environment:
       POSTGRES_DB: shopping-cart
       POSTGRES_USER: shopping-cart
@@ -12,13 +13,13 @@ services:
   zookeeper:
     image: 'bitnami/zookeeper:latest'
     ports:
-      - "2181:2181"
+      - '2181:2181'
     environment:
       - ALLOW_ANONYMOUS_LOGIN=yes
   kafka:
     image: 'bitnami/kafka:latest'
     ports:
-      - "9092:9092"
+      - '9092:9092'
     environment:
       - KAFKA_BROKER_ID=1
       - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092
